@@ -1,3 +1,10 @@
+package javambs;
+
+import javambs.DisplayMap;
+import javambs.FishDisplay;
+import javambs.MBSFactory;
+import javambs.MBSGUIFrame;
+
 // AP(r) Computer Science Marine Biology Simulation:
 // The MBSGUI class is copyright(c) 2002 College Entrance
 // Examination Board (www.collegeboard.com).

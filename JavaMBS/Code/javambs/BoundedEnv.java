@@ -1,5 +1,9 @@
+package javambs;
+
+import javambs.SquareEnvironment;
+
 // AP(r) Computer Science Marine Biology Simulation:
-// The UnboundedEnv class is copyright(c) 2002 College Entrance
+// The BoundedEnv class is copyright(c) 2002 College Entrance
 // Examination Board (www.collegeboard.com).
 //
 // This class is free software; you can redistribute it and/or modify
@@ -11,22 +15,14 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
-import java.util.ArrayList;
-
 /**
  *  AP&reg; Computer Science Marine Biology Simulation:<br>
- *  The <code>UnboundedEnv</code> class models an unbounded, two-dimensional,
- *  grid-like environment containing locatable objects.  For example, it
- *  could be an environment of fish for a marine biology simulation.
+ *  The <code>BoundedEnv</code> class models a bounded, two-dimensional,
+ *  grid-like  environment containing locatable objects.  For example,
+ *  it could be an environment of fish for a marine biology simulation.
  *
  *  <p>
- *  Modification History:
- *  - Created to support multiple environment representations:
- *    this class represents a second implementation of the
- *    <code>Environment</code> interface.
- *
- *  <p>
- *  The <code>UnboundedEnv</code> class is
+ *  The <code>BoundedEnv</code> class is
  *  copyright&copy; 2002 College Entrance Examination Board
  *  (www.collegeboard.com).
  *
@@ -37,41 +33,48 @@ import java.util.ArrayList;
  *  @see Location
  **/
 
-public class UnboundedEnv extends SquareEnvironment
+public class BoundedEnv extends SquareEnvironment
 {
-    // Instance Variables: Encapsulated data for each UnboundedEnv object
-    private ArrayList objectList;   // list of Locatable objects in environment
+    // Instance Variables: Encapsulated data for each BoundedEnv object
+    private Locatable[][] theGrid;  // grid representing the environment
+    private int objectCount;        // # of objects in current environment
 
 
   // constructors
 
-    /** Constructs an empty UnboundedEnv object.
+    /** Constructs an empty BoundedEnv object with the given dimensions.
+     *  (Precondition: <code>rows > 0</code> and <code>cols > 0</code>.)
+     *  @param rows        number of rows in BoundedEnv
+     *  @param cols        number of columns in BoundedEnv
      **/
-    public UnboundedEnv()
+    public BoundedEnv(int rows, int cols)
     {
         // Construct and initialize inherited attributes.
         super();
 
-        objectList = new ArrayList();
+        theGrid = new Locatable[rows][cols];
+        objectCount = 0;
     }
 
 
   // accessor methods
 
-    /** Returns number of rows in this environment.
-     *  @return   the number of rows, or -1 if the environment is unbounded
+    /** Returns number of rows in the environment.
+     *  @return   the number of rows, or -1 if this environment is unbounded
      **/
     public int numRows()
     {
-        return -1;
+        return theGrid.length;
     }
 
-    /** Returns number of columns in this environment.
-     *  @return   the number of columns, or -1 if the environment is unbounded
+    /** Returns number of columns in the environment.
+     *  @return   the number of columns, or -1 if this environment is unbounded
      **/
     public int numCols()
     {
-        return -1;
+        // Note: according to the constructor precondition, numRows() > 0, so
+        // theGrid[0] is non-null.
+        return theGrid[0].length;
     }
 
     /** Verifies whether a location is valid in this environment.
@@ -81,8 +84,11 @@ public class UnboundedEnv extends SquareEnvironment
      **/
     public boolean isValid(Location loc)
     {
-        // All non-null locations are valid in an unbounded environment.
-        return loc != null;
+        if ( loc == null )
+            return false;
+
+        return (0 <= loc.row() && loc.row() < numRows()) &&
+               (0 <= loc.col() && loc.col() < numCols());
     }
 
     /** Returns the number of objects in this environment.
@@ -90,7 +96,7 @@ public class UnboundedEnv extends SquareEnvironment
      **/
     public int numObjects()
     {
-        return objectList.size();
+        return objectCount;
     }
 
     /** Returns all the objects in this environment.
@@ -98,15 +104,25 @@ public class UnboundedEnv extends SquareEnvironment
      **/
     public Locatable[] allObjects()
     {
-        Locatable[] objectArray = new Locatable[objectList.size()];
+        Locatable[] theObjects = new Locatable[numObjects()];
+        int tempObjectCount = 0;
 
-        // Put all the environment objects in the list.
-        for ( int index = 0; index < objectList.size(); index++ )
+        // Look at all grid locations.
+        for ( int r = 0; r < numRows(); r++ )
         {
-            objectArray[index] = (Locatable) objectList.get(index);
+            for ( int c = 0; c < numCols(); c++ )
+            {
+                // If there's an object at this location, put it in the array.
+                Locatable obj = theGrid[r][c];
+                if ( obj != null )
+                {
+                    theObjects[tempObjectCount] = obj;
+                    tempObjectCount++;
+                }
+            }
         }
 
-        return objectArray;
+        return theObjects;
     }
 
     /** Determines whether a specific location in this environment is
@@ -118,21 +134,21 @@ public class UnboundedEnv extends SquareEnvironment
      **/
     public boolean isEmpty(Location loc)
     {
-        return (objectAt(loc) == null);
+        return isValid(loc) && objectAt(loc) == null;
     }
 
     /** Returns the object at a specific location in this environment.
      *  @param loc    the location in which to look
      *  @return       the object at location <code>loc</code>;
-     *                <code>null</code> if <code>loc</code> is empty
+     *                <code>null</code> if <code>loc</code> is not
+     *                in the environment or is empty
      **/
     public Locatable objectAt(Location loc)
     {
-        int index = indexOf(loc);
-        if ( index == -1 )
+        if ( ! isValid(loc) )
             return null;
 
-        return (Locatable) objectList.get(index);
+        return theGrid[loc.row()][loc.col()];
     }
 
     /** Creates a single string representing all the objects in this
@@ -165,7 +181,8 @@ public class UnboundedEnv extends SquareEnvironment
                                     " is not a valid empty location");
 
         // Add object to the environment.
-        objectList.add(obj);
+        theGrid[loc.row()][loc.col()] = obj;
+        objectCount++;
     }
 
     /** Removes the object from this environment.
@@ -175,14 +192,15 @@ public class UnboundedEnv extends SquareEnvironment
      **/
     public void remove(Locatable obj)
     {
-        // Find the index of the object to remove.
-        int index = indexOf(obj.location());
-        if ( index == -1 )
-            throw new IllegalArgumentException("Cannot remove " +
+        // Make sure that the object is there to remove.
+        Location loc = obj.location();
+        if ( objectAt(loc) != obj )
+            throw new IllegalArgumentException("Cannot remove " + 
                                                obj + "; not there");
 
-        // Remove the object.
-        objectList.remove(index);
+        // Remove the object from the grid.
+        theGrid[loc.row()][loc.col()] = null;
+        objectCount--;
     }
 
     /** Updates this environment to reflect the fact that an object moved.
@@ -198,55 +216,21 @@ public class UnboundedEnv extends SquareEnvironment
      **/
     public void recordMove(Locatable obj, Location oldLoc)
     {
-        int objectsAtOldLoc = 0;
-        int objectsAtNewLoc = 0;
-
-        // Look through the list to find how many objects are at old
-        // and new locations.
+        // Simplest case: There was no movement.
         Location newLoc = obj.location();
-        for ( int index = 0; index < objectList.size(); index++ )
-        {
-            Locatable thisObj = (Locatable) objectList.get(index);
-            if ( thisObj.location().equals(oldLoc) )
-                objectsAtOldLoc++;
-            if ( thisObj.location().equals(newLoc) )
-                objectsAtNewLoc++;
-        }
+        if ( newLoc.equals(oldLoc) )
+            return;
 
-        // There should be one object at newLoc.  If oldLoc equals
-        // newLoc, there should be one at oldLoc; otherwise, there
-        // should be none.
-        if ( ! ( objectsAtNewLoc == 1 &&
-                 ( oldLoc.equals(newLoc) || objectsAtOldLoc == 0 ) ) )
-        {
+        // Otherwise, oldLoc should contain the object that is
+        //   moving and the new location should be empty.
+        Locatable foundObject = objectAt(oldLoc);
+        if ( ! (foundObject == obj && isEmpty(newLoc)) )
             throw new IllegalArgumentException("Precondition violation moving "
                 + obj + " from " + oldLoc);
-        }
-    }
 
-
-  // internal helper method
-
-    /** Get the index of the object at the specified location.
-     *  @param loc    the location in which to look
-     *  @return       the index of the object at location <code>loc</code>
-     *                if there is one; -1 otherwise
-     **/
-    protected int indexOf(Location loc)
-    {
-        // Look through the list to find the object at the given location.
-        for ( int index = 0; index < objectList.size(); index++ )
-        {
-            Locatable obj = (Locatable) objectList.get(index);
-            if ( obj.location().equals(loc) )
-            {
-                // Found the object -- return its index.
-                return index;
-            }
-        }
-
-        // No such object found.
-        return -1;
+        // Move the object to the proper location in the grid.
+        theGrid[newLoc.row()][newLoc.col()] = obj;
+        theGrid[oldLoc.row()][oldLoc.col()] = null;
     }
 
 }
