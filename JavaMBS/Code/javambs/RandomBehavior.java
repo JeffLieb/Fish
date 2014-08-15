@@ -1,25 +1,25 @@
 package javambs;
 
+import java.util.Random;
+
 public class RandomBehavior implements Behavior
 {
     private int percentage;
-
+    private Random random = new Random();
+    
     public RandomBehavior(int percentage)
     {
         this.percentage = percentage;
-        // TODO Auto-generated constructor stub
     }
 
-    protected int chooseRandom()
+    private int chooseRandom()
     {
-        return 0;
+        return random.nextInt(100);
     }
 
-    @Override
-    public boolean should()
+    public boolean shouldAct()
     {
-        // TODO Auto-generated method stub
-        return false;
+        return chooseRandom() < percentage;
     }
 
 }

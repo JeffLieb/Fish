@@ -12,36 +12,41 @@ import javambs.SlowFish;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 
 public class SlowFishTest
 {
     
     private Environment env;
     private Location originalLocation;
+    
+    @InjectMocks
     private Fish underTest;
 
+    @Mock
+    private Behavior behavior;
+    
     @Before
     public void setup() {
         env = new BoundedEnv(5, 5);
         originalLocation = new Location(3, 3);
+        underTest = new SlowFish(env, originalLocation);
+        MockitoAnnotations.initMocks(this);
     }
 
-    private void createSlowFish(Behavior behavior)
+    private void behaviorShouldReturn(boolean shouldAct)
     {
-        underTest = new SlowFish(env, originalLocation, behavior);
+        Mockito.when(behavior.shouldAct()).thenReturn(shouldAct);
     }
     
     @Test
     public void shouldMove() {
          
-        Behavior behavior = new Behavior() {
-            @Override
-          public boolean should() {
-              return true;
-          }
-        };
-        
-        createSlowFish(behavior);
+        behaviorShouldReturn(true);
+
         underTest.act();
         
         Location newLocation = underTest.location();
@@ -52,14 +57,7 @@ public class SlowFishTest
     @Test
     public void shouldNotMove() {
         
-        createSlowFish(new Behavior()
-        {
-            @Override
-            public boolean should()
-            {
-                return false;
-            }
-        });
+        behaviorShouldReturn(false);
         
         underTest.act();
         
